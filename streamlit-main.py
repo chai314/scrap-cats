@@ -13,6 +13,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from streamlit_image_select import image_select
 from platform import system as RUNNING_OS
+from nsfw_detector import predict as nsfw
 
 def refresh_results():
     st.session_state.new_results=True
@@ -28,6 +29,11 @@ def get_AI_model():
     return AI
 
 @st.cache_resource
+def get_nsfw_model():
+    NSFW  = nsfw.load_model('./nsfw_mobilenet2.224x224.h5')
+    return NSFW
+
+@st.cache_resource
 def get_res50_model():
     from zipfile import ZipFile
     z= ZipFile('res50.zip')
@@ -35,6 +41,10 @@ def get_res50_model():
     res50 = load_model("res50.keras")
     return res50
   
+res_map = {i:j for i,j in enumerate(("impressionism", "renaissance","surrealism","art_nouveau","baroque","expressionism","romanticism",
+          "ukiyo_e","post_impressionism","realism","AI_impressionism","AI_post_impressionism","AI_art_nouveau",
+          "AI_surrealism","AI_ukiyo_e","AI_romanticism","AI_baroque","AI_expressionism","AI_renaissance","AI_realism"))}
+
 def scrape_for_files(query):
     ysq = '+'.join(query.split())
     url=f"https://www.google.com/search?q={ysq}+filetype%3Ajpg&sca_esv=9cd90a64e37ec4fc&sca_upv=1&udm=2&biw=1536&bih=730&sxsrf=ADLYWIJOxqvpGyqsBYYqmRV_pRJvpYHMwg%3A1719876553212&ei=yTuDZuDKDKWNnesP-sm6mAM&ved=0ahUKEwig04u4_4aHAxWlRmcHHfqkDjMQ4dUDCBA&uact=5&oq=ai+generated+images+filetype%3Ajpg&gs_lp=Egxnd3Mtd2l6LXNlcnAiIGFpIGdlbmVyYXRlZCBpbWFnZXMgZmlsZXR5cGU6anBnSJQGUI0EWI0EcAF4AJABAJgBhgGgAYYBqgEDMC4xuAEDyAEA-AEBmAIAoAIAmAMAiAYBkgcAoAct&sclient=gws-wiz-serp"
@@ -96,7 +106,7 @@ def get_driver():
     return driver
 
 
-'# AI or Not? Classification'
+'# Scraping Categorizers'
 '## Upload the image you suspect: '
 file = st.file_uploader('', type=['jpeg', 'jpg', 'png'])
 "Don't have 'em on you right now? We've got Google"
@@ -120,19 +130,27 @@ if files and file is None:
 
 ai_model = get_AI_model()
 res50_model = get_res50_model()
-res_map = {i:j for i,j in enumerate(("impressionism", "renaissance","surrealism","art_nouveau","baroque","expressionism","romanticism",
-          "ukiyo_e","post_impressionism","realism","AI_impressionism","AI_post_impressionism","AI_art_nouveau",
-          "AI_surrealism","AI_ukiyo_e","AI_romanticism","AI_baroque","AI_expressionism","AI_renaissance","AI_realism"))}
+#nsfw_model = get_nsfw_model()
+
 if file is not None:
     image = Image.open(file).convert('RGB')
     image = ImageOps.exif_transpose(image)
 
     st.image(image)
 
+    st.markdown("---")
+    st.markdown("## AI or not?")
     confidence = classify(image, ai_model)
     st.write(f"CIFAKE-AI: As a dumbass AI model I think this image is AI with a {10000*confidence//10/10}% chance")
     
     res50_label = res50_classify(image)
     confidence = res50_label/20
-    st.write(f"Resnet50: I vehemently assert this image is AI with a {10000*confidence//10/10}% chance")
-    st.write(f"Moreover, the style seems to be: {res_map[res50_label]}")
+    st.write(f"Resnet50: This image is AI with a {10000*confidence//10/10}% chance")
+    st.markdown("---")
+    st.markdown("## Art Style?")
+    st.write(f"Resnet50: Moreover, the style seems to be: {res_map[res50_label]}")
+
+    st.markdown("---")
+    st.markdown("## Safe for work?")
+    "The NSFW model doesn't think anything cause I've offlined it!" 
+    #nsfw.classify(nsfw_model,file,image_dim=image.size)

@@ -1,4 +1,6 @@
 Keras==3.4.1
-tensorflow==2.16.2
+tensorflow==2.17
 selenium==4.22.0
 streamlit-image-select
+tensorflow-hub
+nsfw-detector
