@@ -13,7 +13,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from streamlit_image_select import image_select
 from platform import system as RUNNING_OS
-from nsfw_detector import predict as nsfw
+#from nsfw_detector import predict as nsfw
 
 def refresh_results():
     st.session_state.new_results=True
@@ -28,10 +28,10 @@ def get_AI_model():
     AI = load_model("ai.h5")
     return AI
 
-@st.cache_resource
-def get_nsfw_model():
-    NSFW  = nsfw.load_model('./nsfw_mobilenet2.224x224.h5')
-    return NSFW
+#@st.cache_resource
+#def get_nsfw_model():
+#    NSFW  = nsfw.load_model('./nsfw_mobilenet2.224x224.h5')
+#    return NSFW
 
 @st.cache_resource
 def get_res50_model():
